@@ -1,2 +1,9 @@
 MNIST_data
 MNIST_data/*
+data
+data/*
+model
+model/*
+bak
+bak/*
+*.bak
