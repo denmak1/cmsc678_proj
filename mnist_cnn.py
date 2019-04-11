@@ -50,10 +50,12 @@ def main():
   correct_pred = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
   accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-
+  # dynamic memory allocation
+  config = tf.ConfigProto()
+  config.gpu_options.allow_growth = True
 
   # run tf session
-  with tf.Session() as sess:
+  with tf.Session(config = config) as sess:
     sess.run(init_op)
     total_batch = int(len(mnist.train.labels) / batch_size)
 

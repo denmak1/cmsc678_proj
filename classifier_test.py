@@ -176,7 +176,11 @@ def create_fc_layer(input_data,
 
 total_iterations = 0
 
-session = tf.Session()
+# important to avoid out of memory errors on GPU
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+
+session = tf.Session(config = config)
 
 print("loading image data...")
 total_num_classes, int_train_set, int_dev_set = load_data()

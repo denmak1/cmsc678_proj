@@ -43,8 +43,12 @@ def main():
   # initialize the variables
   init = tf.global_variables_initializer()
 
+  # dynamic memory allocation
+  config = tf.ConfigProto()
+  config.gpu_options.allow_growth = True
+
   # train the model
-  with tf.Session() as sess:
+  with tf.Session(config = config) as sess:
     sess.run(init)
     n_batches = mnist.train.num_examples // batch_size
 
