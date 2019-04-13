@@ -7,8 +7,16 @@ import sys
 import time
 
 def main():
+  if (len(sys.argv) < 3):
+    msg = ("usage: python %s <tag> <tag2> [excluded ratings]\n"
+           "excluded ratings can be (separated by space):\n"
+           "  s = safe, q = questionable, e = ecchi")
+    print(msg % (sys.argv)[0])
+    return
+
   tag = sys.argv[1]
   solo = sys.argv[2]
+  excluded_ratings = sys.argv[3:]
 
   exts = ["jpg", "png", "bmp", "gif", "jpeg"]
 
@@ -32,7 +40,12 @@ def main():
     posts = page_tree.xpath('//article[starts-with(@class, "post-preview")]')
     for post in posts:
       img_url = post.attrib["data-file-url"]
-      if (img_url.split('.')[-1] in exts):
+
+      # s = safe, q = questionable, e = ecchi
+      img_rating = post.attrib["data-rating"]
+      include = img_rating not in excluded_ratings
+
+      if ((img_url.split('.')[-1] in exts) and include):
         print(img_url)
         fname = img_url.split('/')[-1]
         fpath = "%s/%s" % (path, fname)

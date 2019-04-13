@@ -9,7 +9,7 @@ INT_DEV_RATIO = 0.2
 
 BATCH_SIZE = 32
 
-IMG_SIZE = 128
+IMG_SIZE = 256
 NUM_CHANNELS = 3
 
 # adjust paths accordingly for linux
