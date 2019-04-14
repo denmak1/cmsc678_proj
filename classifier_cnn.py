@@ -4,6 +4,7 @@ import os
 import cv2
 from sklearn.utils import shuffle
 
+#test
 INT_DEV_SIZE_PER_LABEL = 64
 INT_DEV_RATIO = 0.2
 
