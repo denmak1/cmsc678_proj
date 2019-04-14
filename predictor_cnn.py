@@ -8,7 +8,9 @@ IMG_SIZE = 256
 NUM_CHANNELS = 3
 
 PATH_SEP = "\\"
-MODEL_NAME = "model" + PATH_SEP + "test_model"
+MODEL_NAME = "smile_precure_model"
+MODEL_PATH = "model" + PATH_SEP + MODEL_NAME
+MODEL_META = MODEL_PATH + PATH_SEP + MODEL_NAME + ".meta"
 
 USE_CLASSES_F = "use_classes.txt"
 
@@ -33,8 +35,8 @@ def main():
   config.gpu_options.allow_growth = True
   sess = tf.Session(config = config)
 
-  saver = tf.train.import_meta_graph(MODEL_NAME + ".meta")
-  saver.restore(sess, tf.train.latest_checkpoint("model"))
+  saver = tf.train.import_meta_graph(MODEL_META)
+  saver.restore(sess, tf.train.latest_checkpoint(MODEL_PATH))
 
   # restore the graph and reload the tensors
   graph = tf.get_default_graph()
@@ -57,7 +59,6 @@ def main():
 
   # results correspond to same index in use_classes
   for result in results:
-    i = 0;
     for i in range(len(use_classes)):
       msg = "{0:>6.1%} :: " + use_classes[i]
       print(msg.format(result[i])) 

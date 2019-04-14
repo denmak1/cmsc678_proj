@@ -16,7 +16,10 @@ NUM_CHANNELS = 3
 # adjust paths accordingly for linux
 PATH_SEP = "\\"
 TRAIN_DIR = "data" + PATH_SEP + "train" + PATH_SEP
-MODEL_NAME = "model" + PATH_SEP + "test_model"
+
+MODEL_NAME = "smile_precure_model"
+MODEL_PATH = "model" + PATH_SEP + MODEL_NAME
+MODEL_FULL = MODEL_PATH + PATH_SEP + MODEL_NAME
 
 # use class names specified in this file for training
 USE_CLASSES_F = "use_classes.txt"
@@ -53,19 +56,14 @@ class DataSet():
 def load_data():
   # use only classes specified in the USE_CLASSES_F file
   with open(USE_CLASSES_F) as f:
-    use_classes = f.readlines()
-  use_classes = [x.strip() for x in use_classes]
+    class_list = f.readlines()
+  class_list = [x.strip() for x in class_list]
+  total_num_classes = len(class_list)
 
   images = []
   labels = []
   classes = []
   fnames = []
-
-  class_list = []      # all possible labels
-  for td in os.listdir(TRAIN_DIR):
-    if td in use_classes:
-      class_list.append(td)
-  total_num_classes = len(class_list)
 
   # training images are in ./train/<tag>/*
   # label is <tag>
@@ -73,6 +71,12 @@ def load_data():
   for td in class_list:
     file_dir = TRAIN_DIR + td
     for fp in os.listdir(file_dir):
+
+      # ignore gifs
+      if fp.split('.')[1] == "gif":
+        print("skipping gif")
+        continue;
+
       fpath = file_dir + PATH_SEP + fp
       print(fpath)
 
@@ -319,7 +323,7 @@ def train(num_iteration):
       epoch = int(i / int(int_train_set.num_examples/BATCH_SIZE))
       print_progress(epoch, train_dict, dev_dict)
 
-      saver.save(session, MODEL_NAME)
+      saver.save(session, MODEL_FULL)
       gc.collect()
 
   total_iterations += num_iteration
