@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import os
 import cv2
+import gc
 from sklearn.utils import shuffle
 
 INT_DEV_SIZE_PER_LABEL = 64
@@ -13,9 +14,12 @@ IMG_SIZE = 256
 NUM_CHANNELS = 3
 
 # adjust paths accordingly for linux
-WORK_DIR = "H:\\dev\\cmsc678_proj\\"
-TRAIN_DIR = WORK_DIR + "data\\train\\"
 PATH_SEP = "\\"
+TRAIN_DIR = "data" + PATH_SEP + "train" + PATH_SEP
+MODEL_NAME = "model" + PATH_SEP + "test_model"
+
+# use class names specified in this file for training
+USE_CLASSES_F = "use_classes.txt"
 
 class DataSet():
   def __init__(self, _images, _labels, _classes, _fnames):
@@ -47,6 +51,11 @@ class DataSet():
 # END DataSet
 
 def load_data():
+  # use only classes specified in the USE_CLASSES_F file
+  with open(USE_CLASSES_F) as f:
+    use_classes = f.readlines()
+  use_classes = [x.strip() for x in use_classes]
+
   images = []
   labels = []
   classes = []
@@ -54,13 +63,14 @@ def load_data():
 
   class_list = []      # all possible labels
   for td in os.listdir(TRAIN_DIR):
-    class_list.append(td)
+    if td in use_classes:
+      class_list.append(td)
   total_num_classes = len(class_list)
 
   # training images are in ./train/<tag>/*
   # label is <tag>
   label_idx = 0
-  for td in os.listdir(TRAIN_DIR):
+  for td in class_list:
     file_dir = TRAIN_DIR + td
     for fp in os.listdir(file_dir):
       fpath = file_dir + PATH_SEP + fp
@@ -266,9 +276,10 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 session.run(tf.global_variables_initializer())
 
-def print_progress(epoch, train_dict, dev_dict, dev_loss):
-  acc     = session.run(accuracy, feed_dict = train_dict)
-  dev_acc = session.run(accuracy, feed_dict = dev_dict)
+def print_progress(epoch, train_dict, dev_dict):
+  dev_loss = session.run(cost,     feed_dict = dev_dict)
+  acc      = session.run(accuracy, feed_dict = train_dict)
+  dev_acc  = session.run(accuracy, feed_dict = dev_dict)
 
   msg = ("Epoch {0:>3} : "
          "Train Acc: {1:>6.1%}, "
@@ -305,12 +316,11 @@ def train(num_iteration):
     session.run(optimizer, feed_dict = train_dict)
 
     if (i % int(int_train_set.num_examples/BATCH_SIZE) == 0):
-      dev_loss = session.run(cost, feed_dict = dev_dict)
-
       epoch = int(i / int(int_train_set.num_examples/BATCH_SIZE))
+      print_progress(epoch, train_dict, dev_dict)
 
-      print_progress(epoch, train_dict, dev_dict, dev_loss)
-      saver.save(session, "model" + PATH_SEP + "test_model")
+      saver.save(session, MODEL_NAME)
+      gc.collect()
 
   total_iterations += num_iteration
 
