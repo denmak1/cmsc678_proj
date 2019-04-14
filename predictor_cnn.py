@@ -8,14 +8,19 @@ IMG_SIZE = 256
 NUM_CHANNELS = 3
 
 PATH_SEP = "\\"
-MODEL_NAME = "smile_precure_model"
-MODEL_PATH = "model" + PATH_SEP + MODEL_NAME
-MODEL_META = MODEL_PATH + PATH_SEP + MODEL_NAME + ".meta"
 
 USE_CLASSES_F = "use_classes.txt"
 
 def main():
-  img_file = sys.argv[1] 
+  if (len(sys.argv) != 3):
+    print("usage: %s <model> <input image>" % sys.argv[0])
+    return
+
+  MODEL_NAME = sys.argv[1]
+  MODEL_PATH = "model" + PATH_SEP + MODEL_NAME
+  MODEL_META = MODEL_PATH + PATH_SEP + MODEL_NAME + ".meta"
+
+  img_file = sys.argv[2]
 
   # read image
   image = cv2.imread(img_file)

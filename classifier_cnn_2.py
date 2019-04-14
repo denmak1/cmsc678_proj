@@ -166,8 +166,7 @@ def create_conv_layer(input_data,
 def create_conv_layer_no_pool(input_data,
                               num_input_channels,
                               conv_filter_size,
-                              num_filters,
-                              ksize):
+                              num_filters):
   shape = [conv_filter_size,
            conv_filter_size,
            num_input_channels,
@@ -178,7 +177,6 @@ def create_conv_layer_no_pool(input_data,
 
   layer = tf.nn.conv2d(input = input_data,
                        filter = weights,
-                       kernel_size = ksize,
                        strides = [1, 1, 1, 1],
                        padding = "SAME")
   layer += biases
@@ -242,7 +240,6 @@ Y_true_class = tf.argmax(Y_true, dimension = 1)
 
 # layer properties
 filter_size_conv0 = 3
-kernel_size_conv0 = 2
 num_filters_conv0 = 16
 
 filter_size_conv1 = 3
@@ -261,8 +258,7 @@ layer_conv0 = \
   create_conv_layer_no_pool(X,
                             NUM_CHANNELS,
                             filter_size_conv0,
-                            num_filters_conv0,
-                            kernel_size_conv0)
+                            num_filters_conv0)
 
 layer_conv1 = \
   create_conv_layer(layer_conv0,
