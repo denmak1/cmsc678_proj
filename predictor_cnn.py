@@ -13,7 +13,7 @@ USE_CLASSES_F = "use_classes.txt"
 
 def main():
   if (len(sys.argv) != 3):
-    print("usage: %s <model> <input image>" % sys.argv[0])
+    print("usage: %s <model> <input image | directory>" % sys.argv[0])
     return
 
   MODEL_NAME = sys.argv[1]
@@ -22,18 +22,32 @@ def main():
 
   img_file = sys.argv[2]
 
-  # read image
-  image = cv2.imread(img_file)
-  image = cv2.resize(image, (IMG_SIZE, IMG_SIZE), 0, 0, cv2.INTER_LINEAR)
-
   images = []
-  images.append(image)
-  images = np.array(images, dtype=np.uint8)
+  if (len(img_file.split(".")) > 1):             # single image
+    print("loading image %s" % (img_file))
+
+    img = cv2.imread(img_file)
+    img = cv2.resize(img, (IMG_SIZE, IMG_SIZE), 0, 0, cv2.INTER_LINEAR)
+    images.append(img)
+
+    images = np.array(images, dtype=np.uint8)
+    images = images.astype('float32')
+    images = np.multiply(images, 1.0/255.0)
+  elif (len(img_file.split(".")) == 1):          # directory of images
+    for fp in os.listdir(img_file):
+      print("loading image %s" % (img_file + PATH_SEP + fp))
+
+      img = cv2.imread(img_file + PATH_SEP + fp)
+      img = cv2.resize(img, (IMG_SIZE, IMG_SIZE), 0, 0, cv2.INTER_LINEAR)
+      images.append(img)
+
+  # adjust images and stuff
+  images = np.array(images, dtype = np.uint8)
   images = images.astype('float32')
   images = np.multiply(images, 1.0/255.0)
 
   # reshape inputs to match the trained model
-  input_X = images.reshape(1, IMG_SIZE, IMG_SIZE, NUM_CHANNELS)
+  input_X = images #.reshape(1, IMG_SIZE, IMG_SIZE, NUM_CHANNELS)
 
   # load saved model and checkpoint
   config = tf.ConfigProto()
@@ -64,6 +78,7 @@ def main():
 
   # results correspond to same index in use_classes
   for result in results:
+    print(result)
     for i in range(len(use_classes)):
       msg = "{0:>6.1%} :: " + use_classes[i]
       print(msg.format(result[i])) 
