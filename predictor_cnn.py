@@ -30,9 +30,6 @@ def main():
     img = cv2.resize(img, (IMG_SIZE, IMG_SIZE), 0, 0, cv2.INTER_LINEAR)
     images.append(img)
 
-    images = np.array(images, dtype=np.uint8)
-    images = images.astype('float32')
-    images = np.multiply(images, 1.0/255.0)
   elif (len(img_file.split(".")) == 1):          # directory of images
     for fp in os.listdir(img_file):
       print("loading image %s" % (img_file + PATH_SEP + fp))

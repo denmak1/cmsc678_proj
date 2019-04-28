@@ -10,14 +10,14 @@ INT_DEV_RATIO = 0.2
 
 BATCH_SIZE = 32
 
-IMG_SIZE = 256
+IMG_SIZE = 400
 NUM_CHANNELS = 3
 
 # adjust paths accordingly for linux
 PATH_SEP = "\\"
 TRAIN_DIR = "data" + PATH_SEP + "train" + PATH_SEP
 
-MODEL_NAME = "smile_precure_model"
+MODEL_NAME = "smile_precure_model_cnn_1"
 MODEL_PATH = "model" + PATH_SEP + MODEL_NAME
 MODEL_FULL = MODEL_PATH + PATH_SEP + MODEL_NAME
 
@@ -280,6 +280,8 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 session.run(tf.global_variables_initializer())
 
+f = open("train_log-m1.txt", "w")
+
 def print_progress(epoch, train_dict, dev_dict):
   dev_loss = session.run(cost,     feed_dict = dev_dict)
   acc      = session.run(accuracy, feed_dict = train_dict)
@@ -290,6 +292,7 @@ def print_progress(epoch, train_dict, dev_dict):
          "Dev Acc: {2:>6.1%}, "
          "Dev Loss: {3:.3f}")
   print(msg.format(epoch + 1, acc, dev_acc, dev_loss))
+  f.write(msg.format(epoch + 1, acc, dev_acc, dev_loss) + "\n")
 # END print_progress
 
 # training
@@ -328,4 +331,4 @@ def train(num_iteration):
 
   total_iterations += num_iteration
 
-train(num_iteration=3000)
+train(num_iteration=5000)
