@@ -5,12 +5,23 @@ import cv2
 from matplotlib import pyplot as plt
 
 def alpha_blend(overlay, img):
+  img = np.float32(img)
   print(overlay.shape)
   print(img.shape)
-  overlay = cv2.cvtColor(overlay, cv2.COLOR_GRAY2RGB)
-  overlay = cv2.normalize(overlay, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
 
-  cvt = cv2.multiply(img, overlay)
+  overlay = cv2.cvtColor(overlay, cv2.COLOR_GRAY2RGB)
+  overlay = np.float32(overlay) / 255.0
+
+  print(img)
+
+  cv2.imshow("over", overlay)
+  cv2.waitKey(0)
+
+  print(overlay.shape)
+  print(img.shape)
+
+  cvt = np.uint8(cv2.multiply(img, overlay))
+  print(cvt)
 
   #print(overlay.shape)
   #print(img.shape)
@@ -18,6 +29,7 @@ def alpha_blend(overlay, img):
  
   cv2.imshow("cvt", cvt)
   cv2.waitKey(0)
+# END alpha_blend
 
 def adaptive_thresh(img):
   img = cv2.medianBlur(img, 5)
@@ -45,7 +57,6 @@ def adaptive_thresh(img):
   return th2
 # END adaptive_thresh
 
-
 def main():
   img_path = sys.argv[1]
 
@@ -55,13 +66,13 @@ def main():
 
   #t, img = cv2.threshold(img_bw, 200, 255, cv2.THRESH_BINARY_INV)
 
+  print(img)
+
   cv2.imshow("image", img)
   cv2.waitKey(0)
 
   th = adaptive_thresh(img_bw)
   alpha_blend(th, img)
-
-  return 0
 
   # get edges using canny
   edges = cv2.Canny(img, 100, 200, 200)
