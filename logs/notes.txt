@@ -1,0 +1,4 @@
+train_log-m1.txt - classifier_cnn.py
+train_log-m2.txt - classifier_cnn_2.py, 400 x 400
+train_log-m3.txt - classifier_cnn_3.py, 384 x 384, no negative class
+train_log-m4.txt - classifier_cnn_3.py, 384 x 384, with negative class
