@@ -12,6 +12,7 @@ RAW_IMG_SIZE_X = 1920
 RAW_IMG_SIZE_Y = 1080
 MAX_EPOCH = 100
 MIN_CONTOUR_SIZE = 50
+MAX_NUM_CLUSTERS = 20
 
 def center_contours(img):
   gray    = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -24,7 +25,7 @@ def center_contours(img):
   num_nonzeros = np.count_nonzero(thresh)
   nonzero_ratio = num_nonzeros / (RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y)
   print(nonzero_ratio)
-  num_clusters = int(MIN_CONTOUR_SIZE * nonzero_ratio)
+  num_clusters = int(MAX_NUM_CLUSTERS * nonzero_ratio)
 
   cv2.imshow("eroded", thresh)
   cv2.waitKey(0)
