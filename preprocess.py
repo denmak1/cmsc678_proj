@@ -2,7 +2,136 @@ import numpy as np
 import os
 import sys
 import cv2
+import random
+import imutils
+
 from matplotlib import pyplot as plt
+from kmeans import KMeans
+
+RAW_IMG_SIZE_X = 1920
+RAW_IMG_SIZE_Y = 1080
+MAX_EPOCH = 100
+
+def center_contours(img):
+  gray    = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+  blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+  thresh  = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
+
+  cv2.imshow("eroded", thresh)
+  cv2.waitKey(0)
+
+  cnts = cv2.findContours(thresh.copy(),
+                          cv2.RETR_EXTERNAL,
+                          cv2.CHAIN_APPROX_SIMPLE)
+
+  cnts = imutils.grab_contours(cnts)
+
+  # store list of contour center pts
+  contour_pts = []
+
+  for c in cnts:
+    # dropout on contours that are too small/noise
+    if (cv2.contourArea(c) < 400):
+      continue
+
+    # compute the center of the contour
+    M = cv2.moments(c)
+
+    if (M["m00"] != 0):
+      cX = int(M["m10"] / M["m00"])
+      cY = int(M["m01"] / M["m00"])
+    else:
+      cX = 0
+      cY = 0
+
+    contour_pts.append((cX, cY));
+
+    # draw the contour and center of the shape on the image
+    cv2.drawContours(img, [c], -1, (0, 255, 0), 2)
+    cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
+    cv2.putText(img, "center", (cX - 20, cY - 20),
+      cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+  # show image
+  cv2.imshow("Image", img)
+  cv2.waitKey(0)
+
+  # perform kmeans on contour points
+  km = KMeans(MAX_EPOCH, False)
+  km.add_data_pts(contour_pts)
+
+  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
+                     random.randint(0, RAW_IMG_SIZE_Y)], "CENTER1")
+
+  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
+                     random.randint(0, RAW_IMG_SIZE_Y)], "CENTER2")
+
+  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
+                     random.randint(0, RAW_IMG_SIZE_Y)], "CENTER3")
+
+  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
+                     random.randint(0, RAW_IMG_SIZE_Y)], "CENTER4")
+
+  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
+                     random.randint(0, RAW_IMG_SIZE_Y)], "CENTER5")
+
+  km.run_alg()
+  km.print_cluster_pts()
+
+  for cp in km.cluster_pts:
+    cN = cp[1]
+    cX = int(cp[0][0])
+    cY = int(cp[0][1])
+
+    # draw the contour and center of the shape on the image
+    cv2.circle(img, (cX, cY), 10, (255, 0, 0), -1)
+    cv2.putText(img, cN, (cX - 20, cY - 20),
+      cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+  # show image
+  cv2.imshow("Image", img)
+  cv2.waitKey(0)
+
+def kmeans_img(img):
+  km = KMeans(MAX_EPOCH, False)
+
+  pts = []
+  for i in range(RAW_IMG_SIZE_X):
+    for j in range(RAW_IMG_SIZE_Y):
+      if (img[j][i] == 255):
+        pts.append((i, j))
+
+  km.add_data_pts(pts)
+
+  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
+                     random.randint(0, RAW_IMG_SIZE_Y)], "red")
+
+  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
+                     random.randint(0, RAW_IMG_SIZE_Y)], "green")
+
+  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
+                     random.randint(0, RAW_IMG_SIZE_Y)], "blue")
+
+  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
+                     random.randint(0, RAW_IMG_SIZE_Y)], "yellow")
+  km.run_alg()
+  km.print_cluster_pts()
+# END kmeans_img
+
+def erode_img(img):
+  # inv edges
+  edges = cv2.Canny(img, 100, 200, 200)
+  edges_inv = cv2.bitwise_not(edges)
+
+  # kernel = np.ones((9, 9), np.uint8)
+  kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (6,6))
+
+  # erosion to thicken outlines
+  erosion = cv2.erode(edges_inv, kernel, iterations=3)
+  erosion = cv2.bitwise_not(erosion)
+
+  return erosion
+# END erode_img
 
 def draw_lines(img, edges, color=[0, 0, 255], thickness=3):
 
@@ -16,17 +145,12 @@ def draw_lines(img, edges, color=[0, 0, 255], thickness=3):
     maxLineGap=25
   )
 
-  # If there are no lines to draw, exit.
   if lines is None:
     return
 
-  # Make a copy of the original image.
   img = np.copy(img)
-
-  # Create a blank image that matches the original in size.
   line_img = np.zeros((img.shape[0], img.shape[1], 3),  dtype=np.uint8,)
 
-  # Loop over all lines and draw them on the blank image.
   for line in lines:
     for x1, y1, x2, y2 in line:
       cv2.line(line_img, (x1, y1), (x2, y2), color, thickness)
@@ -36,45 +160,31 @@ def draw_lines(img, edges, color=[0, 0, 255], thickness=3):
 
   img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
 
-  # Merge the image with the lines onto the original.
+  # combine img
   img = cv2.addWeighted(img, 0.8, line_img, 1.0, 0.0)
 
-  # Show keypoints
   cv2.imshow("lines", img)
   cv2.waitKey(0)
 
-  # Return the modified image.
   return img
 # END draw_lines
 
 def blob_detect(img):
-  # Setup SimpleBlobDetector parameters.
   params = cv2.SimpleBlobDetector_Params()
 
-  # Change thresholds
   params.minThreshold = 50
   params.maxThreshold = 200
-
-  # Filter by Area.
   params.filterByArea = True
   params.minArea = 15
-
-  # Filter by Circularity
   params.filterByCircularity = True
   params.minCircularity = 0.1
-
-  # Filter by Convexity
   params.filterByConvexity = True
   params.minConvexity = 0.87
-
-  # Filter by Inertia
   params.filterByInertia = True
   params.minInertiaRatio = 0.001
 
-  # Create a detector with the parameters
   detector = cv2.SimpleBlobDetector_create(params)
  
-  # Detect blobs.
   keypoints = detector.detect(img)
  
   img_keypoints = \
@@ -84,9 +194,9 @@ def blob_detect(img):
                       (0, 0, 255),
                       cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
  
-  # Show keypoints
   cv2.imshow("Keypoints", img_keypoints)
   cv2.waitKey(0)
+# END blob_detect
 
 # overlay should be grayscale, img should be rgb
 def alpha_blend(overlay, img):
@@ -222,4 +332,5 @@ def main():
 
   cv2.destroyAllWindows()
 
-main()
+if __name__ == "__main__":
+  main()

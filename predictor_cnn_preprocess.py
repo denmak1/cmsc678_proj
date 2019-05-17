@@ -4,6 +4,8 @@ import os
 import sys
 import tensorflow as tf
 
+from preprocess import erode_img, kmeans_img, center_contours
+
 IMG_SIZE = 400
 NUM_CHANNELS = 3
 
@@ -26,7 +28,15 @@ def main():
   if (len(img_file.split(".")) > 1):             # single image
     print("loading image %s" % (img_file))
 
-    img = cv2.imread(img_file)
+    img     = cv2.imread(img_file)
+    img_pre = erode_img(img)
+
+    cv2.imshow("eroded", img_pre)
+    cv2.waitKey(0)
+
+    #kmeans_img(img_pre)
+    center_contours(img)
+
     img = cv2.resize(img, (IMG_SIZE, IMG_SIZE), 0, 0, cv2.INTER_LINEAR)
     images.append(img)
 
