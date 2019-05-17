@@ -99,6 +99,7 @@ class KMeans:
       dist_list.append(self.dist(pt, c[0]))
 
     d, i = min((d, i) for (i, d) in enumerate(dist_list)) 
+    # TODO: check here for empty list for min to avoid error
 
     return i
 

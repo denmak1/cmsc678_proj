@@ -28,17 +28,21 @@ def main():
   if (len(img_file.split(".")) > 1):             # single image
     print("loading image %s" % (img_file))
 
-    img     = cv2.imread(img_file)
-    img_pre = erode_img(img)
+    img      = cv2.imread(img_file)
+    img_orig = img.copy()
 
-    cv2.imshow("eroded", img_pre)
-    cv2.waitKey(0)
+    #img_pre = erode_img(img)
+    #kmeans_img(img_pre)                         # way too slow lmao
 
-    #kmeans_img(img_pre)
-    center_contours(img)
+    # get image segments
+    seg_imgs, seg_pts = center_contours(img)
 
-    img = cv2.resize(img, (IMG_SIZE, IMG_SIZE), 0, 0, cv2.INTER_LINEAR)
-    images.append(img)
+    for i in range(len(seg_imgs)):
+      try: 
+        img_temp = cv2.resize(seg_imgs[i], (IMG_SIZE, IMG_SIZE), 0, 0, cv2.INTER_LINEAR)
+        images.append(img_temp)
+      except cv2.error:
+        pass
 
   elif (len(img_file.split(".")) == 1):          # directory of images
     for fp in os.listdir(img_file):
@@ -84,10 +88,24 @@ def main():
   results = sess.run(Y_pred, feed_dict = pred_dict)
 
   # results correspond to same index in use_classes
+  c = 0
   for result in results:
     print(result)
+
+    cv2.rectangle(img_orig, seg_pts[c][0], seg_pts[c][1], (0, 0, 255), 3)
+    
+    y0, dy = seg_pts[c][0][1] + 14, 14
     for i in range(len(use_classes)):
       msg = "{0:>6.1%} :: " + use_classes[i]
-      print(msg.format(result[i])) 
+      print(msg.format(result[i]))
+
+      y = y0 + i * dy
+      cv2.putText(img_orig, msg.format(result[i]), (seg_pts[c][0][0], y),
+        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+    c += 1
+
+  cv2.imshow("cropped", img_orig)
+  cv2.waitKey(0)
 
 main()

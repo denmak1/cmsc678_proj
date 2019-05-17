@@ -12,10 +12,15 @@ RAW_IMG_SIZE_X = 1920
 RAW_IMG_SIZE_Y = 1080
 MAX_EPOCH = 100
 MIN_CONTOUR_SIZE = 50
-MAX_NUM_CLUSTERS = 20
+MAX_NUM_CLUSTERS = 30
 
+# returns segmented images based on contours, outlines and points of interest
+# based on k-means clustered contour center points
 def center_contours(img):
+  img_orig = img.copy()
+
   gray    = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+  #gray    = erode_img(img)
   blurred = cv2.GaussianBlur(gray, (5, 5), 0)
   thresh  = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
   #thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, \
@@ -40,8 +45,8 @@ def center_contours(img):
   contour_pts = []
 
   for c in cnts:
-    # dropout on contours that are too small/noise
-    if (cv2.contourArea(c) < 50):
+    # dropout contours that are too small/noise
+    if (cv2.contourArea(c) < 22):
       continue
 
     # compute the center of the contour
@@ -79,6 +84,9 @@ def center_contours(img):
   km.print_cluster_pts()
 
   i = 0
+  segment_imgs = []
+  segment_pts  = []
+
   for cp in km.cluster_pts:
     farthest_pt = km.get_farthest_x_and_y(i)
     fX = farthest_pt[0]
@@ -98,15 +106,48 @@ def center_contours(img):
       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
     # draw rectangle centered at cluster point
-    pt1 = (int(cX-fX), int(cY-fY))
-    pt2 = (int(cX+fX), int(cY+fY))
+    pt1 = [int(cX-fX), int(cY-fY)]
+    pt2 = [int(cX+fX), int(cY+fY)]
+
+    if (pt1[0] < 0):
+      pt1[0] = 0
+    if (pt2[0] < 0):
+      pt2[0] = 0
+    if (pt1[1] < 0):
+      pt1[1] = 0
+    if (pt2[1] < 0):
+      pt2[1] = 0
+
+    if (pt1[0] >= RAW_IMG_SIZE_X):
+      pt1[0] = RAW_IMG_SIZE_X-1
+    if (pt1[1] >= RAW_IMG_SIZE_Y):
+      pt1[1] = RAW_IMG_SIZE_Y-1
+    if (pt2[0] >= RAW_IMG_SIZE_X):
+      pt2[0] = RAW_IMG_SIZE_X-1
+    if (pt2[1] >= RAW_IMG_SIZE_Y):
+      pt2[1] = RAW_IMG_SIZE_Y-1
+
+    pt1 = tuple(pt1)
+    pt2 = tuple(pt2)
+
+    print(pt1, pt2)
     cv2.rectangle(img, pt1, pt2, (0, 0, 255), 3)
+
+    crop_img = img_orig[pt1[1]:pt2[1], pt1[0]:pt2[0]]
+    segment_imgs.append(crop_img)
+    segment_pts.append((pt1, pt2))
+
+    #cv2.imshow("cropped", crop_img)
+    #cv2.waitKey(0)
 
     i += 1
 
   # show image
-  cv2.imshow("Image", img)
-  cv2.waitKey(0)
+  #cv2.imshow("Image", img)
+  #cv2.waitKey(0)
+
+  return segment_imgs, segment_pts
+# END center_contours
 
 def kmeans_img(img):
   km = KMeans(MAX_EPOCH, False)
@@ -140,7 +181,7 @@ def erode_img(img):
   edges_inv = cv2.bitwise_not(edges)
 
   # kernel = np.ones((9, 9), np.uint8)
-  kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (6,6))
+  kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3,3))
 
   # erosion to thicken outlines
   erosion = cv2.erode(edges_inv, kernel, iterations=3)
