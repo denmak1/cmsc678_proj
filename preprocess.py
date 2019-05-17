@@ -17,6 +17,8 @@ def center_contours(img):
   gray    = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
   blurred = cv2.GaussianBlur(gray, (5, 5), 0)
   thresh  = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
+  #thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, \
+  #                               cv2.THRESH_BINARY, 25, 1)
 
   # get non-zero ratio
   num_nonzeros = np.count_nonzero(thresh)
