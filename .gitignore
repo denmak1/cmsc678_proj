@@ -8,3 +8,5 @@ bak
 bak/*
 *.bak
 *.swp
+__pycache__
+__pycache__/*

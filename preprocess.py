@@ -11,11 +11,18 @@ from kmeans import KMeans
 RAW_IMG_SIZE_X = 1920
 RAW_IMG_SIZE_Y = 1080
 MAX_EPOCH = 100
+MIN_CONTOUR_SIZE = 50
 
 def center_contours(img):
   gray    = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
   blurred = cv2.GaussianBlur(gray, (5, 5), 0)
   thresh  = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
+
+  # get non-zero ratio
+  num_nonzeros = np.count_nonzero(thresh)
+  nonzero_ratio = num_nonzeros / (RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y)
+  print(nonzero_ratio)
+  num_clusters = int(MIN_CONTOUR_SIZE * nonzero_ratio)
 
   cv2.imshow("eroded", thresh)
   cv2.waitKey(0)
@@ -31,7 +38,7 @@ def center_contours(img):
 
   for c in cnts:
     # dropout on contours that are too small/noise
-    if (cv2.contourArea(c) < 400):
+    if (cv2.contourArea(c) < 50):
       continue
 
     # compute the center of the contour
@@ -60,33 +67,39 @@ def center_contours(img):
   km = KMeans(MAX_EPOCH, False)
   km.add_data_pts(contour_pts)
 
-  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
-                     random.randint(0, RAW_IMG_SIZE_Y)], "CENTER1")
-
-  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
-                     random.randint(0, RAW_IMG_SIZE_Y)], "CENTER2")
-
-  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
-                     random.randint(0, RAW_IMG_SIZE_Y)], "CENTER3")
-
-  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
-                     random.randint(0, RAW_IMG_SIZE_Y)], "CENTER4")
-
-  km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
-                     random.randint(0, RAW_IMG_SIZE_Y)], "CENTER5")
+  # create n clusters (based on non-zero pixel ratio)
+  for n in range(num_clusters):
+    km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
+                       random.randint(0, RAW_IMG_SIZE_Y)], "CENTER"+str(n))
 
   km.run_alg()
   km.print_cluster_pts()
 
+  i = 0
   for cp in km.cluster_pts:
+    farthest_pt = km.get_farthest_x_and_y(i)
+    fX = farthest_pt[0]
+    fY = farthest_pt[1]
+
     cN = cp[1]
-    cX = int(cp[0][0])
-    cY = int(cp[0][1])
+    try:
+      cX = int(cp[0][0])
+      cY = int(cp[0][1])
+    except IndexError:
+      i += 1
+      continue
 
     # draw the contour and center of the shape on the image
     cv2.circle(img, (cX, cY), 10, (255, 0, 0), -1)
     cv2.putText(img, cN, (cX - 20, cY - 20),
       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+    # draw rectangle centered at cluster point
+    pt1 = (int(cX-fX), int(cY-fY))
+    pt2 = (int(cX+fX), int(cY+fY))
+    cv2.rectangle(img, pt1, pt2, (0, 0, 255), 3)
+
+    i += 1
 
   # show image
   cv2.imshow("Image", img)

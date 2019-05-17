@@ -68,6 +68,19 @@ class KMeans:
 
     plt.pause(0.01)
 
+  def get_farthest_x_and_y(self, k):
+    cp = self.cluster_pts[k]
+
+    max_x = 0
+    max_y = 0
+
+    for p in self.get_pts_in_cluster(k):
+      if (abs(p[0] - cp[0][0]) > max_x):
+        max_x = abs(p[0] - cp[0][0])
+      if (abs(p[1] - cp[0][1]) > max_y):
+        max_y = abs(p[1] - cp[0][1])
+
+    return (max_x, max_y)
 
   def get_pts_in_cluster(self, k):
     pts = []
