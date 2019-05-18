@@ -3,6 +3,8 @@ import numpy as np
 import sys
 import os
 
+STOP_THRESH = 2
+
 class KMeans:
   def __init__(self, max_epochs, live_graph):
     self.K = 0
@@ -10,9 +12,10 @@ class KMeans:
 
     self.data = []
     self.cluster_pts = []
-    self.prev_cluser_pts = []
+    self.prev_cluster_pts = []
 
     self.live_graph = live_graph
+  # END __init__
 
   def add_data_pts(self, data):
     self.data = data
@@ -20,10 +23,16 @@ class KMeans:
 
     # cluster assignment list per point, -1 = unassigned
     self.cluster_assignment = [-1] * self.N
+  # END add_data_pts
 
   def add_cluster_pt(self, pt, color):
+    print("adding cluster pt", pt, color)
+
     self.cluster_pts.append([np.array(pt, dtype=np.float64), color])
+    self.prev_cluster_pts.append([np.array([-9999, -9999], dtype=np.float64),
+                                 color])
     self.K += 1
+  # END add_cluster_pt
 
   def show_plot(self):
     plt.clf()
@@ -43,11 +52,13 @@ class KMeans:
       plt.scatter(c[0][0], c[0][1], color=c[1], marker="X", s=100)
 
     plt.show()
+  # END show_plot
 
   def print_cluster_pts(self):
     for cpt in self.cluster_pts:
       print(cpt[1] + ": " + str(cpt[0]) + ",")
     print("\n")
+  # END print_cluster_pts
 
   def show_plot_live(self):
     plt.clf()
@@ -67,6 +78,7 @@ class KMeans:
       plt.scatter(c[0][0], c[0][1], color=c[1], marker="X", s=100)
 
     plt.pause(0.01)
+  # END show_plot_live
 
   def get_farthest_x_and_y(self, k):
     cp = self.cluster_pts[k]
@@ -81,6 +93,7 @@ class KMeans:
         max_y = abs(p[1] - cp[0][1])
 
     return (max_x, max_y)
+  # END get_farthest_x_and_y
 
   def get_pts_in_cluster(self, k):
     pts = []
@@ -89,9 +102,11 @@ class KMeans:
         pts.append(p)
 
     return pts
+  # END get_pts_in_cluster
 
   def dist(self, a, b):
     return np.linalg.norm(a - b, axis=0)
+  # END dist
 
   def get_closest_cluster(self, pt):
     dist_list = []
@@ -99,25 +114,33 @@ class KMeans:
       dist_list.append(self.dist(pt, c[0]))
 
     d, i = min((d, i) for (i, d) in enumerate(dist_list)) 
-    # TODO: check here for empty list for min to avoid error
 
     return i
+  # END get_closest_cluster
 
   def is_conv(self):
+    res = [False] * self.K
+
     for k in range(self.K):
-      if (self.cluster_pts[k][0]):
-        pass
+      if (self.dist(self.cluster_pts[k][0], \
+                    self.prev_cluster_pts[k][0]) <= STOP_THRESH):
+        res[k] = True
+
+    # return true if all are true
+    return all(r for r in res)
+  # END is_conv
 
   def assign_clusters(self):
     for i in range(self.N):
       self.cluster_assignment[i] = self.get_closest_cluster(self.data[i])
+  # END assign_clusters
 
   def run_alg(self):
     if (self.live_graph):
       plt.ion()
 
     for i in range(self.max_epochs):
-    #while (not is_conv):
+    #while (not self.is_conv):
       self.assign_clusters()
       self.print_cluster_pts()
 
@@ -125,7 +148,10 @@ class KMeans:
         self.show_plot_live()
 
       for k in range(self.K):
+        self.prev_cluster_pts[k][0] = self.cluster_pts[k][0]
         self.cluster_pts[k][0] = np.mean(self.get_pts_in_cluster(k), axis=0)
+  # END run_alg
+# END Kmeans
 
 def main():
   fname = sys.argv[1]

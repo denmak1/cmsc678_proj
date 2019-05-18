@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from preprocess import erode_img, kmeans_img, center_contours
 
-IMG_SIZE = 400
+IMG_SIZE = 384
 NUM_CHANNELS = 3
 
 PATH_SEP = "\\"
@@ -38,8 +38,10 @@ def main():
     seg_imgs, seg_pts = center_contours(img)
 
     for i in range(len(seg_imgs)):
+      # ignore regions that are too small since they will throw error
       try: 
-        img_temp = cv2.resize(seg_imgs[i], (IMG_SIZE, IMG_SIZE), 0, 0, cv2.INTER_LINEAR)
+        img_temp = cv2.resize(seg_imgs[i], (IMG_SIZE, IMG_SIZE), 0, 0,
+                              cv2.INTER_LINEAR)
         images.append(img_temp)
       except cv2.error:
         pass
@@ -92,13 +94,16 @@ def main():
   for result in results:
     print(result)
 
+    # put rectangle around region
     cv2.rectangle(img_orig, seg_pts[c][0], seg_pts[c][1], (0, 0, 255), 3)
-    
+
+    # used for multi line text
     y0, dy = seg_pts[c][0][1] + 14, 14
     for i in range(len(use_classes)):
       msg = "{0:>6.1%} :: " + use_classes[i]
       print(msg.format(result[i]))
 
+      # move to next line and print text
       y = y0 + i * dy
       cv2.putText(img_orig, msg.format(result[i]), (seg_pts[c][0][0], y),
         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)

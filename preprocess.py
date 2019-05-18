@@ -30,7 +30,9 @@ def center_contours(img):
   num_nonzeros = np.count_nonzero(thresh)
   nonzero_ratio = num_nonzeros / (RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y)
   print(nonzero_ratio)
-  num_clusters = int(MAX_NUM_CLUSTERS * nonzero_ratio)
+
+  # TODO: need better way to automatically pick cluster amount
+  # num_clusters = int(MAX_NUM_CLUSTERS * nonzero_ratio)
 
   cv2.imshow("eroded", thresh)
   cv2.waitKey(0)
@@ -40,6 +42,9 @@ def center_contours(img):
                           cv2.CHAIN_APPROX_SIMPLE)
 
   cnts = imutils.grab_contours(cnts)
+
+  # set number of clusters based on amount of contours
+  num_clusters = int(len(cnts) * nonzero_ratio)
 
   # store list of contour center pts
   contour_pts = []
@@ -91,8 +96,9 @@ def center_contours(img):
     farthest_pt = km.get_farthest_x_and_y(i)
     fX = farthest_pt[0]
     fY = farthest_pt[1]
-
     cN = cp[1]
+
+    # skip cluster in case nan
     try:
       cX = int(cp[0][0])
       cY = int(cp[0][1])
@@ -105,10 +111,12 @@ def center_contours(img):
     cv2.putText(img, cN, (cX - 20, cY - 20),
       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
-    # draw rectangle centered at cluster point
+    # coordinates for top-left and bottom-right points of the  rectangle
+    # centered at cluster point
     pt1 = [int(cX-fX), int(cY-fY)]
     pt2 = [int(cX+fX), int(cY+fY)]
 
+    # restrict coordinates to be within original images resolution
     if (pt1[0] < 0):
       pt1[0] = 0
     if (pt2[0] < 0):
@@ -129,10 +137,12 @@ def center_contours(img):
 
     pt1 = tuple(pt1)
     pt2 = tuple(pt2)
-
     print(pt1, pt2)
+
+    # draw on image
     cv2.rectangle(img, pt1, pt2, (0, 0, 255), 3)
 
+    # crop original image and store in array
     crop_img = img_orig[pt1[1]:pt2[1], pt1[0]:pt2[0]]
     segment_imgs.append(crop_img)
     segment_pts.append((pt1, pt2))

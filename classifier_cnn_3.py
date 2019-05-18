@@ -10,14 +10,14 @@ INT_DEV_RATIO = 0.2
 
 BATCH_SIZE = 32
 
-IMG_SIZE = 256
+IMG_SIZE = 384
 NUM_CHANNELS = 3
 
 # adjust paths accordingly for linux
 PATH_SEP = "\\"
 TRAIN_DIR = "data" + PATH_SEP + "train" + PATH_SEP
 
-MODEL_NAME = "smile_precure_model_cnn_3"
+MODEL_NAME = "smile_precure_model_cnn_4"
 MODEL_PATH = "model" + PATH_SEP + MODEL_NAME
 MODEL_FULL = MODEL_PATH + PATH_SEP + MODEL_NAME
 
