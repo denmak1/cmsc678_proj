@@ -55,6 +55,7 @@ class KMeans:
   # END show_plot
 
   def print_cluster_pts(self):
+    print("printing cluster pts")
     for cpt in self.cluster_pts:
       print(cpt[1] + ": " + str(cpt[0]) + ",")
     print("\n")
@@ -100,11 +101,12 @@ class KMeans:
     for c, p in zip(self.cluster_assignment, self.data):
       if (c == k):
         pts.append(p)
-
+    #print("pts in cluster", pts)
     return pts
   # END get_pts_in_cluster
 
   def dist(self, a, b):
+    #print("getting dist between", a, b)
     return np.linalg.norm(a - b, axis=0)
   # END dist
 
@@ -112,7 +114,7 @@ class KMeans:
     dist_list = []
     for c in self.cluster_pts:
       dist_list.append(self.dist(pt, c[0]))
-
+    #print("dist list", dist_list)
     d, i = min((d, i) for (i, d) in enumerate(dist_list)) 
 
     return i
@@ -126,6 +128,7 @@ class KMeans:
                     self.prev_cluster_pts[k][0]) <= STOP_THRESH):
         res[k] = True
 
+    #print("is_conv", res)
     # return true if all are true
     return all(r for r in res)
   # END is_conv
@@ -140,7 +143,7 @@ class KMeans:
       plt.ion()
 
     for i in range(self.max_epochs):
-    #while (not self.is_conv):
+    #while (not self.is_conv()):
       self.assign_clusters()
       self.print_cluster_pts()
 

@@ -11,7 +11,7 @@ INT_DEV_RATIO = 0.2
 
 BATCH_SIZE = 32
 
-IMG_SIZE = 384
+IMG_SIZE = 400
 NUM_CHANNELS = 3
 
 # adjust paths accordingly for linux
@@ -193,7 +193,8 @@ def flatten_layer(layer):
 def create_fc_layer(input_data,
                     num_inputs,
                     num_outputs,
-                    use_relu = True):
+                    use_relu = True,
+                    use_sigmoid = False):
   shape = [num_inputs, num_outputs]
 
   weights = create_weights(shape)
@@ -204,28 +205,29 @@ def create_fc_layer(input_data,
   if use_relu:
     layer = tf.nn.relu(layer)
 
+  if use_sigmoid:
+    layer = tf.nn.sigmoid(layer)
+
   return layer
 # END create_fc_layer
 
-if (len(sys.argv) != 2):
-  print("usage: %s <model_name> <train_log_output_file>" % sys.argv[0])
+if (len(sys.argv) != 4):
+  print("usage: %s <model_name> <train_log_output_file> <sigmoid|softmax>" % sys.argv[0])
   exit()
 
 # set model name
 model_name = sys.argv[1]
 model_path = "model" + PATH_SEP + model_name
-model_full =  + PATH_SEP + model_name
+model_full = model_path + PATH_SEP + model_name
 
 # set output file name
 log_file_name = sys.argv[2]
 
-total_iterations = 0
-
-# important to avoid out of memory errors on GPU
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True
-
-session = tf.Session(config = config)
+# classifier output type
+output_type = sys.argv[3]
+if (output_type not in ["sigmoid", "softmax"]):
+  print("activation must be either softmax or sigmoid")
+  exit()
 
 print("loading image data...")
 total_num_classes, int_train_set, int_dev_set = load_data()
@@ -238,6 +240,7 @@ print("total_num_classes = " + str(total_num_classes))
 print("init model...")
 shape = [None, IMG_SIZE, IMG_SIZE, NUM_CHANNELS]
 
+print("creating data placeholders...")
 # input
 X = tf.placeholder(tf.float32, shape = shape, name = 'X')
 
@@ -247,6 +250,16 @@ Y_true = tf.placeholder(tf.float32,
                         name = "Y_true")
 Y_true_class = tf.argmax(Y_true, dimension = 1)
 
+# TODO: try data iterator and batching using tf.Dataset
+#batch_size = tf.placeholder(tf.int64)
+#tf_dataset = \
+#  tf.data.Dataset.from_tensor_slices((X, Y_true)).batch(batch_size).repeat()
+
+#tf_iter = dataset.make_initializable_iterator()
+#features, labels = tf_iter.get_next()
+print("done")
+
+print("creating layers...")
 # layer properties
 filter_size_conv0 = 1
 num_filters_conv0 = 64
@@ -293,32 +306,52 @@ layer_fc1 = \
   create_fc_layer(layer_flat,
                   layer_flat.get_shape()[1:4].num_elements(),
                   fc_layer_size,
-                  True)
+                  True,
+                  False)
 
 layer_fc2 = \
   create_fc_layer(layer_fc1,
                   fc_layer_size,
                   total_num_classes,
+                  False,
                   False)
+print("done")
 
-# output
-Y_pred = tf.nn.softmax(layer_fc2, name = 'Y_pred')
+print("setting up output and accuracy metrics...")
+if (output_type == "sigmoid"):
+  Y_pred = tf.nn.sigmoid(layer_fc2, name = 'Y_pred')
+  cross_entropy = \
+    tf.nn.sigmoid_cross_entropy_with_logits(logits = layer_fc2,
+                                            labels = Y_true)
+elif (output_type == "softmax"):
+  Y_pred = tf.nn.softmax(layer_fc2, name = 'Y_pred')
+  cross_entropy = \
+    tf.nn.softmax_cross_entropy_with_logits(logits = layer_fc2,
+                                            labels = Y_true)
+
 Y_pred_class = tf.argmax(Y_pred, dimension = 1)
 
-# init
-session.run(tf.global_variables_initializer())
-
-cross_entropy = \
-  tf.nn.softmax_cross_entropy_with_logits(logits = layer_fc2,
-                                          labels = Y_true)
 cost = tf.reduce_mean(cross_entropy)
 optimizer = tf.train.AdamOptimizer(learning_rate = 1e-4).minimize(cost)
 
 # accuracy metrics stuff
 correct_prediction = tf.equal(Y_pred_class, Y_true_class)
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+print("done")
 
+print("initializing session...")
+# important to avoid out of memory errors on GPU
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+
+session = tf.Session(config = config)
 session.run(tf.global_variables_initializer())
+
+#i_dict = {X:          int_train_set.images,
+#          Y_true:     int_train_set.labels,
+#          batch_size: BATCH_SIZE}
+
+#session.run(tf_iter.initializer, feed_dict=i_dict)
 
 f = open(log_file_name, "w")
 
@@ -343,7 +376,9 @@ if (not os.path.exists(model_path)):
   os.makedirs(model_path, 0o0755)
 
 saver = tf.train.Saver()
+print("done")
 
+print("training...")
 def train(num_iteration):
   global total_iterations
 
@@ -373,4 +408,5 @@ def train(num_iteration):
 
 train(num_iteration=10000)
 
+print("done")
 f.close()

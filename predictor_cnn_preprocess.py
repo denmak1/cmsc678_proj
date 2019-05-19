@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from preprocess import erode_img, kmeans_img, center_contours
 
-IMG_SIZE = 384
+IMG_SIZE = 400
 NUM_CHANNELS = 3
 
 PATH_SEP = "\\"

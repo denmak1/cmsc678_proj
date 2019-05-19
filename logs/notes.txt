@@ -8,3 +8,6 @@ train_log-m4.txt - classifier_cnn_3.py, 384 x 384, with negative class
 
 train_log-m2-sigmoid.txt - classifier_cnn_2.py with sigmoid instead of
                            softmax, 400 x 400, no negative class
+
+spc-m3-sig-400-log.txt - classifier_cnn_3r.py with sigmoid, 400 x 400,
+                         with new scenery/backgrounds class

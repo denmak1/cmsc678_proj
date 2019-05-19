@@ -12,19 +12,29 @@ RAW_IMG_SIZE_X = 1920
 RAW_IMG_SIZE_Y = 1080
 MAX_EPOCH = 100
 MIN_CONTOUR_SIZE = 50
-MAX_NUM_CLUSTERS = 30
+MAX_NUM_CLUSTERS = 20
+
+def adjust_gamma(image, gamma=1.0):
+  invGamma = 1.0 / gamma
+  table = np.array([((i / 255.0) ** invGamma) * 255
+    for i in np.arange(0, 256)]).astype("uint8")
+ 
+  return cv2.LUT(image, table)
 
 # returns segmented images based on contours, outlines and points of interest
 # based on k-means clustered contour center points
 def center_contours(img):
   img_orig = img.copy()
+  RAW_IMG_SIZE_X = len(img[0])
+  RAW_IMG_SIZE_Y = len(img)
 
+  #img = adjust_gamma(img, 2.5)
   gray    = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
   #gray    = erode_img(img)
   blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-  thresh  = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
-  #thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, \
-  #                               cv2.THRESH_BINARY, 25, 1)
+  #thresh  = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
+  thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, \
+                                 cv2.THRESH_BINARY, 25, 0.5)
 
   # get non-zero ratio
   num_nonzeros = np.count_nonzero(thresh)
@@ -32,7 +42,9 @@ def center_contours(img):
   print(nonzero_ratio)
 
   # TODO: need better way to automatically pick cluster amount
-  # num_clusters = int(MAX_NUM_CLUSTERS * nonzero_ratio)
+  num_clusters = int(MAX_NUM_CLUSTERS * nonzero_ratio)
+  if (num_clusters < 3):
+    num_clusters = 3
 
   cv2.imshow("eroded", thresh)
   cv2.waitKey(0)
@@ -44,7 +56,7 @@ def center_contours(img):
   cnts = imutils.grab_contours(cnts)
 
   # set number of clusters based on amount of contours
-  num_clusters = int(len(cnts) * nonzero_ratio)
+  #num_clusters = int(len(cnts) * nonzero_ratio)
 
   # store list of contour center pts
   contour_pts = []
