@@ -212,7 +212,8 @@ def create_fc_layer(input_data,
 # END create_fc_layer
 
 if (len(sys.argv) != 4):
-  print("usage: %s <model_name> <train_log_output_file> <sigmoid|softmax>" % sys.argv[0])
+  print("usage: %s <model_name> <train_log_output_file> <sigmoid|softmax>" \
+        % sys.argv[0])
   exit()
 
 # set model name
