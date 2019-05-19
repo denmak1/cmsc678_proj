@@ -4,6 +4,7 @@ import os
 import cv2
 import gc
 import sys
+import time
 from sklearn.utils import shuffle
 
 INT_DEV_SIZE_PER_LABEL = 64
@@ -356,7 +357,7 @@ session.run(tf.global_variables_initializer())
 
 f = open(log_file_name, "w")
 
-def print_progress(epoch, train_dict, dev_dict):
+def print_progress(epoch, train_dict, dev_dict, elapsed_time):
   dev_loss = session.run(cost,     feed_dict = dev_dict)
   acc      = session.run(accuracy, feed_dict = train_dict)
   dev_acc  = session.run(accuracy, feed_dict = dev_dict)
@@ -364,9 +365,10 @@ def print_progress(epoch, train_dict, dev_dict):
   msg = ("Epoch {0:>3} : "
          "Train Acc: {1:>6.1%}, "
          "Dev Acc: {2:>6.1%}, "
-         "Dev Loss: {3:.3f}")
-  print(msg.format(epoch + 1, acc, dev_acc, dev_loss))
-  f.write(msg.format(epoch + 1, acc, dev_acc, dev_loss) + "\n")
+         "Dev Loss: {3:.3f}, "
+         "Time: {4:>5}")
+  print(msg.format(epoch + 1, acc, dev_acc, dev_loss, elapsed_time))
+  f.write(msg.format(epoch + 1, acc, dev_acc, dev_loss, elapsed_time) + "\n")
 # END print_progress
 
 # training
@@ -380,6 +382,7 @@ saver = tf.train.Saver()
 print("done")
 
 print("training...")
+start_time = time.time()
 def train(num_iteration):
   global total_iterations
 
@@ -399,8 +402,9 @@ def train(num_iteration):
     session.run(optimizer, feed_dict = train_dict)
 
     if (i % int(int_train_set.num_examples/BATCH_SIZE) == 0):
+      end_time = time.time()
       epoch = int(i / int(int_train_set.num_examples/BATCH_SIZE))
-      print_progress(epoch, train_dict, dev_dict)
+      print_progress(epoch, train_dict, dev_dict, end_time - start_time)
 
       saver.save(session, model_full)
       gc.collect()

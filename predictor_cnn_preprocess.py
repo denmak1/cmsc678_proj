@@ -6,11 +6,8 @@ import tensorflow as tf
 
 from preprocess import erode_img, kmeans_img, center_contours
 
-IMG_SIZE = 400
 NUM_CHANNELS = 3
-
 PATH_SEP = "\\"
-
 USE_CLASSES_F = "use_classes.txt"
 
 def main():
@@ -18,12 +15,32 @@ def main():
     print("usage: %s <model> <input image | directory>" % sys.argv[0])
     return
 
-  MODEL_NAME = sys.argv[1]
-  MODEL_PATH = "model" + PATH_SEP + MODEL_NAME
-  MODEL_META = MODEL_PATH + PATH_SEP + MODEL_NAME + ".meta"
+  # set model path info
+  model_name = sys.argv[1]
+  model_path = "model" + PATH_SEP + model_name
+  model_meta = model_path + PATH_SEP + model_name + ".meta"
 
   img_file = sys.argv[2]
 
+  # load saved model
+  config = tf.ConfigProto()
+  config.gpu_options.allow_growth = True
+  sess = tf.Session(config = config)
+
+  saver = tf.train.import_meta_graph(model_meta)
+  saver.restore(sess, tf.train.latest_checkpoint(model_path))
+
+  # restore the graph and reload the tensors
+  graph = tf.get_default_graph()
+  Y_pred = graph.get_tensor_by_name("Y_pred:0")
+  X      = graph.get_tensor_by_name("X:0")
+  Y_true = graph.get_tensor_by_name("Y_true:0")
+
+  # read image size from loaded graph
+  img_size_x = X.shape[2]
+  img_size_y = X.shape[1]
+
+  # read and preprocess image
   images = []
   if (len(img_file.split(".")) > 1):             # single image
     print("loading image %s" % (img_file))
@@ -40,7 +57,7 @@ def main():
     for i in range(len(seg_imgs)):
       # ignore regions that are too small since they will throw error
       try: 
-        img_temp = cv2.resize(seg_imgs[i], (IMG_SIZE, IMG_SIZE), 0, 0,
+        img_temp = cv2.resize(seg_imgs[i], (img_size_x, img_size_y), 0, 0,
                               cv2.INTER_LINEAR)
         images.append(img_temp)
       except cv2.error:
@@ -51,7 +68,7 @@ def main():
       print("loading image %s" % (img_file + PATH_SEP + fp))
 
       img = cv2.imread(img_file + PATH_SEP + fp)
-      img = cv2.resize(img, (IMG_SIZE, IMG_SIZE), 0, 0, cv2.INTER_LINEAR)
+      img = cv2.resize(img, (img_size_x, img_size_y), 0, 0, cv2.INTER_LINEAR)
       images.append(img)
 
   # adjust images and stuff
@@ -61,21 +78,6 @@ def main():
 
   # reshape inputs to match the trained model
   input_X = images #.reshape(1, IMG_SIZE, IMG_SIZE, NUM_CHANNELS)
-
-  # load saved model and checkpoint
-  config = tf.ConfigProto()
-  config.gpu_options.allow_growth = True
-  sess = tf.Session(config = config)
-
-  saver = tf.train.import_meta_graph(MODEL_META)
-  saver.restore(sess, tf.train.latest_checkpoint(MODEL_PATH))
-
-  # restore the graph and reload the tensors
-  graph = tf.get_default_graph()
-
-  Y_pred = graph.get_tensor_by_name("Y_pred:0")
-  X      = graph.get_tensor_by_name("X:0") 
-  Y_true = graph.get_tensor_by_name("Y_true:0")
 
   # read class labels from use_classes.txt file
   with open(USE_CLASSES_F) as f:
