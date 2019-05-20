@@ -145,7 +145,7 @@ class KMeans:
     for i in range(self.max_epochs):
     #while (not self.is_conv()):
       self.assign_clusters()
-      self.print_cluster_pts()
+      #self.print_cluster_pts()
 
       if (self.live_graph):
         self.show_plot_live()

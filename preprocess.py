@@ -39,15 +39,15 @@ def center_contours(img):
   # get non-zero ratio
   num_nonzeros = np.count_nonzero(thresh)
   nonzero_ratio = num_nonzeros / (RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y)
-  print(nonzero_ratio)
+  #print(nonzero_ratio)
 
   # TODO: need better way to automatically pick cluster amount
   num_clusters = int(MAX_NUM_CLUSTERS * nonzero_ratio)
   if (num_clusters < 3):
     num_clusters = 3
 
-  cv2.imshow("eroded", thresh)
-  cv2.waitKey(0)
+  #cv2.imshow("eroded", thresh)
+  #cv2.waitKey(0)
 
   cnts = cv2.findContours(thresh.copy(),
                           cv2.RETR_EXTERNAL,
@@ -85,7 +85,7 @@ def center_contours(img):
       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
   # show image
-  cv2.imshow("Image", img)
+  cv2.imshow("contours", img)
   cv2.waitKey(0)
 
   # perform kmeans on contour points
@@ -98,7 +98,7 @@ def center_contours(img):
                        random.randint(0, RAW_IMG_SIZE_Y)], "CENTER"+str(n))
 
   km.run_alg()
-  km.print_cluster_pts()
+  #km.print_cluster_pts()
 
   i = 0
   segment_imgs = []
@@ -149,7 +149,7 @@ def center_contours(img):
 
     pt1 = tuple(pt1)
     pt2 = tuple(pt2)
-    print(pt1, pt2)
+    #print(pt1, pt2)
 
     # draw on image
     cv2.rectangle(img, pt1, pt2, (0, 0, 255), 3)
