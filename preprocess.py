@@ -71,7 +71,7 @@ def center_contours(img):
   blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
   # fixed threshold used for contour mapping
-  thresh   = cv2.threshold(blurred, 220, 255, cv2.THRESH_BINARY)[1]
+  thresh   = cv2.threshold(blurred, 195, 255, cv2.THRESH_BINARY)[1]
   # adaptive threshold used for finding number of cluster points
   thresh_a = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, \
                                  cv2.THRESH_BINARY, 1001, 35)
@@ -169,8 +169,8 @@ def center_contours(img):
   # create n clusters (based on non-zero pixel ratio)
   for n in range(num_clusters):
     # using random points
-    #km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
-    #                   random.randint(0, RAW_IMG_SIZE_Y)], "CENTER"+str(n))
+    #km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X-1),
+    #                   random.randint(0, RAW_IMG_SIZE_Y-1)], "CENTER"+str(n))
 
     # initialize initial cluster points to be the locations of the LARGEST
     # contours.

@@ -132,9 +132,10 @@ def main():
     for i in range(len(use_classes)):
       tag_str += ("%s:%.3f|" % (use_classes[i], 100.0*overall_res[i]))
 
-      tag_str = tag_str[:-1]
-      csv_row = ("%d,\"%s\",\"smile_precure!\",\"%s\",,\"\"\n" % \
-                       (id_cntr, fp, tag_str))
+    tag_str = tag_str[:-1]
+
+    csv_row = ("%d,\"%s\",\"smile_precure!\",\"%s\",,\"\"\n" % \
+               (id_cntr, fp, tag_str))
     print(csv_row)
 
     if (dump_csv == 'y'):
