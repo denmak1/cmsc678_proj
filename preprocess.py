@@ -12,18 +12,54 @@ RAW_IMG_SIZE_X = 1920
 RAW_IMG_SIZE_Y = 1080
 MAX_EPOCH = 100
 MIN_CONTOUR_SIZE = 50
-MAX_NUM_CLUSTERS = 20
+MAX_NUM_CLUSTERS = 5
 
 def adjust_gamma(image, gamma=1.0):
-  invGamma = 1.0 / gamma
-  table = np.array([((i / 255.0) ** invGamma) * 255
+  inv = 1.0 / gamma
+  # TODO: change brightness or luminosity?
+
+  table = np.array([((i / 255.0) ** inv) * 255
     for i in np.arange(0, 256)]).astype("uint8")
  
   return cv2.LUT(image, table)
+# END adjust_gamma
+
+def get_num_clusters_from_trace(img):
+  # get edges using canny
+  edges = cv2.Canny(img, 100, 200, 200)
+  edges_inv = cv2.bitwise_not(edges)
+
+  # kernel = np.ones((9, 9), np.uint8)
+  kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (2,2))
+
+  # erosion
+  erosion = cv2.erode(edges_inv, kernel, iterations=2)
+  erosion = cv2.bitwise_not(erosion)
+
+  cv2.imshow("eroded", erosion)
+  cv2.waitKey(0)
+
+  # get non-zero ratio
+  num_nonzeros = np.count_nonzero(erosion)
+  nonzero_ratio = num_nonzeros / (RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y)
+  zero_ratio    = ((RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y) - num_nonzeros) / \
+                  (RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y)
+
+  cnts = cv2.findContours(erosion.copy(),
+                          cv2.RETR_EXTERNAL,
+                          cv2.CHAIN_APPROX_SIMPLE)
+
+  cnts = imutils.grab_contours(cnts)
+  print("contours from trace", len(cnts), nonzero_ratio)
+
+  return (len(cnts) * (np.log(nonzero_ratio) + 1.0))
+# END get_num_clusters_from_trace
 
 # returns segmented images based on contours, outlines and points of interest
 # based on k-means clustered contour center points
 def center_contours(img):
+  #print("stuff=", get_num_clusters_from_trace(img))
+
   img_orig = img.copy()
   RAW_IMG_SIZE_X = len(img[0])
   RAW_IMG_SIZE_Y = len(img)
@@ -32,22 +68,23 @@ def center_contours(img):
   gray    = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
   #gray    = erode_img(img)
   blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-  thresh  = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
-  #thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, \
-  #                               cv2.THRESH_BINARY, 25, 0.5)
+
+  # fixed threshold used for contour mapping
+  thresh   = cv2.threshold(blurred, 190, 255, cv2.THRESH_BINARY)[1]
+
+  # adaptive threshold used for finding max clusters
+  thresh_a = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, \
+                                 cv2.THRESH_BINARY, 1001, 35)
 
   # get non-zero ratio
-  num_nonzeros = np.count_nonzero(thresh)
+  num_nonzeros = np.count_nonzero(thresh_a)
   nonzero_ratio = num_nonzeros / (RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y)
+  zero_ratio    = ((RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y) - num_nonzeros) / \
+                  (RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y)
   #print(nonzero_ratio)
 
-  # TODO: need better way to automatically pick cluster amount
-  num_clusters = int(MAX_NUM_CLUSTERS * nonzero_ratio)
-  if (num_clusters < 3):
-    num_clusters = 3
-
-  #cv2.imshow("eroded", thresh)
-  #cv2.waitKey(0)
+  cv2.imshow("thresh", thresh_a)
+  cv2.waitKey(0)
 
   cnts = cv2.findContours(thresh.copy(),
                           cv2.RETR_EXTERNAL,
@@ -55,8 +92,12 @@ def center_contours(img):
 
   cnts = imutils.grab_contours(cnts)
 
+  # TODO: need better way to automatically pick cluster amount
   # set number of clusters based on amount of contours
-  #num_clusters = int(len(cnts) * nonzero_ratio)
+  num_clusters = int(MAX_NUM_CLUSTERS * nonzero_ratio)
+  #num_clusters = int((np.log(nonzero_ratio) + 1) * MAX_NUM_CLUSTERS)
+  if (num_clusters < 1):
+    num_clusters = 1
 
   # store list of contour center pts
   contour_pts = []
@@ -85,8 +126,8 @@ def center_contours(img):
       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
   # show image
-  #cv2.imshow("contours", img)
-  #cv2.waitKey(0)
+  cv2.imshow("contours", img)
+  cv2.waitKey(0)
 
   # perform kmeans on contour points
   km = KMeans(MAX_EPOCH, False)
@@ -165,8 +206,8 @@ def center_contours(img):
     i += 1
 
   # show image
-  #cv2.imshow("Image", img)
-  #cv2.waitKey(0)
+  cv2.imshow("Image", img)
+  cv2.waitKey(0)
 
   return segment_imgs, segment_pts
 # END center_contours
