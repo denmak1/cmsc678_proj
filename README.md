@@ -33,12 +33,11 @@ Scripts:
 Logs:
 * logs/\* - model training logs and classification outputs
 
-Deprecated files:
+Deprecated files (these can be deleted but whatever):
 * classifier_cnn.py
 * classifier_cnn_2.py
 * classifier_cnn_2_sigmoid.py
 * classifier_cnn_3.py
-These can be deleted but whatever.
 
 
 # Usage
