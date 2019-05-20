@@ -93,8 +93,9 @@ def main():
 
   # results correspond to same index in use_classes
   c = 0
+  overall_res = {}
   for result in results:
-    print(result)
+    # print(result)
 
     # put rectangle around region
     cv2.rectangle(img_orig, seg_pts[c][0], seg_pts[c][1], (0, 0, 255), 3)
@@ -102,8 +103,12 @@ def main():
     # used for multi line text
     y0, dy = seg_pts[c][0][1] + 14, 14
     for i in range(len(use_classes)):
+      # overall result will just be the max of each tag
+      overall_res[use_classes[i]] = \
+        max([overall_res.get(use_classes[i], 0.0), result[i]])
+
       msg = "{0:>6.1%} :: " + use_classes[i]
-      print(msg.format(result[i]))
+      # print(msg.format(result[i]))
 
       # move to next line and print text
       y = y0 + i * dy
@@ -111,6 +116,8 @@ def main():
         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
     c += 1
+
+  print(overall_res)
 
   cv2.imshow("cropped", img_orig)
   cv2.waitKey(0)
