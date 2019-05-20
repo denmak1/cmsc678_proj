@@ -86,7 +86,7 @@ def center_contours(img):
   # need at least 2 contours so if fixed-threshold contours are not found,
   # decrease threshold filter until found
   tv = 255
-  while(len(cnts) < 2):
+  while(len(cnts) < 2 and tv > 0):
     thresh = cv2.threshold(blurred, tv, 255, cv2.THRESH_BINARY)[1]
     cnts = cv2.findContours(thresh.copy(),
                             cv2.RETR_EXTERNAL,
@@ -95,7 +95,7 @@ def center_contours(img):
     tv -= 10
 
   # adaptive as fallback
-  if (False):
+  if (tv < 0):
     cnts = cv2.findContours(thresh_a.copy(),
                             cv2.RETR_EXTERNAL,
                             cv2.CHAIN_APPROX_SIMPLE)
