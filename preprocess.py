@@ -85,8 +85,8 @@ def center_contours(img):
       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
   # show image
-  cv2.imshow("contours", img)
-  cv2.waitKey(0)
+  #cv2.imshow("contours", img)
+  #cv2.waitKey(0)
 
   # perform kmeans on contour points
   km = KMeans(MAX_EPOCH, False)
