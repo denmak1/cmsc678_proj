@@ -1,12 +1,16 @@
 # cmsc678_proj
-Image Classification Probably
+Image Classification - using a CNN to label and detect characters
+in screenshots from anime using only fanart as the training data.
+
+Weakly supervised approach so no manually inspecting or marking up of
+images to assist in training.
 
 
 # Notes
 I'm using cygwin and windows cmd so the paths coded in the files
 will need to be adjusted to work.
 
-You'll need python 3.
+You'll need python 3, with TensorFlow GPU acceleration and other stuff.
 
 
 # About the files
@@ -16,6 +20,8 @@ Classifiers:
 
 Predictors:
 * bulk_predictor_cnn.py - bulk predicts using the CNN on files in a directory
+* bulk_predictor_cnn_preprocess.py - bulk predicts using the CNN on files in a
+  directory, incorporates preprocessing and saves the marked up images
 * predictor_cnn.py - predicts on an input file without preprocessing
 * predictor_cnn_preprocess.py - predicts on an input image file with
   preprocessing
@@ -23,6 +29,9 @@ Predictors:
 Others:
 * kmeans.py - implements kmeans, used for preprocessing
 * preprocess.py - preprocessing functions for images
+* use_classes.txt - when training a model, this file contains the list of
+  classes to include, which should be some or all of the directories in the
+  data/train dir or whatever
 
 Scripts:
 * scripts/dl_pics.py - downloads pics from a booru given some input tags, used
@@ -41,7 +50,7 @@ Deprecated files (these can be deleted but whatever):
 
 
 # Usage
-For usage examples, just invoke the scripts without any arguments
+For usage examples, just invoke the scripts without any arguments.
 
 
 # TODO
