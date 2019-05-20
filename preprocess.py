@@ -13,7 +13,7 @@ RAW_IMG_SIZE_X = 1920
 RAW_IMG_SIZE_Y = 1080
 MAX_EPOCH = 100
 MIN_CONTOUR_SIZE = 50
-MAX_NUM_CLUSTERS = 5
+MAX_NUM_CLUSTERS = 7
 
 def adjust_gamma(image, gamma=1.0):
   inv = 1.0 / gamma
@@ -71,11 +71,35 @@ def center_contours(img):
   blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
   # fixed threshold used for contour mapping
-  thresh   = cv2.threshold(blurred, 190, 255, cv2.THRESH_BINARY)[1]
-
+  thresh   = cv2.threshold(blurred, 220, 255, cv2.THRESH_BINARY)[1]
   # adaptive threshold used for finding number of cluster points
   thresh_a = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, \
                                  cv2.THRESH_BINARY, 1001, 35)
+
+  # get contours from threshold
+  cnts = cv2.findContours(thresh.copy(),
+                          cv2.RETR_EXTERNAL,
+                          cv2.CHAIN_APPROX_SIMPLE)
+  cnts = imutils.grab_contours(cnts)
+
+  # TODO: rework this too
+  # need at least 2 contours so if fixed-threshold contours are not found,
+  # decrease threshold filter until found
+  tv = 255
+  while(len(cnts) < 2):
+    thresh = cv2.threshold(blurred, tv, 255, cv2.THRESH_BINARY)[1]
+    cnts = cv2.findContours(thresh.copy(),
+                            cv2.RETR_EXTERNAL,
+                            cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+    tv -= 10
+
+  # adaptive as fallback
+  if (False):
+    cnts = cv2.findContours(thresh_a.copy(),
+                            cv2.RETR_EXTERNAL,
+                            cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
 
   # get non-zero ratio
   num_nonzeros = np.count_nonzero(thresh_a)
@@ -84,24 +108,8 @@ def center_contours(img):
                   (RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y)
   #print(nonzero_ratio)
 
-  cv2.imshow("thresh", thresh_a)
-  cv2.waitKey(0)
-
-  cnts = cv2.findContours(thresh.copy(),
-                          cv2.RETR_EXTERNAL,
-                          cv2.CHAIN_APPROX_SIMPLE)
-
-  cnts = imutils.grab_contours(cnts)
-
-  # TODO: rework this too
-  # need at least 2 contours so if fixed-threshold contours are not found,
-  # use adaptive as fallback
-  if (len(cnts) < 2):
-    cnts = cv2.findContours(thresh_a.copy(),
-                            cv2.RETR_EXTERNAL,
-                            cv2.CHAIN_APPROX_SIMPLE)
-
-    cnts = imutils.grab_contours(cnts)
+  #cv2.imshow("thresh", thresh)
+  #cv2.waitKey(0)
 
   # TODO: need better way to automatically pick cluster amount
   # set number of clusters based on amount of contours
@@ -141,8 +149,8 @@ def center_contours(img):
       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
   # show image
-  cv2.imshow("contours", img)
-  cv2.waitKey(0)
+  #cv2.imshow("contours", img)
+  #cv2.waitKey(0)
 
   # perform kmeans on contour points
   km = KMeans(MAX_EPOCH, False)
@@ -153,7 +161,7 @@ def center_contours(img):
   largest_contour_pts = \
     list(dict(Counter(contour_map).most_common(num_clusters)).keys())
 
-  print(len(contour_pts))
+  #print(len(contour_pts))
 
   if (num_clusters > len(contour_pts)):
     num_clusters = len(contour_pts)
@@ -182,8 +190,9 @@ def center_contours(img):
 
   for cp in km.cluster_pts:
     farthest_pt = km.get_farthest_x_and_y(i)
-    fX = farthest_pt[0]
-    fY = farthest_pt[1]
+
+    fX = farthest_pt[0] if farthest_pt[0] != 0 else RAW_IMG_SIZE_X
+    fY = farthest_pt[1] if farthest_pt[1] != 0 else RAW_IMG_SIZE_Y
     cN = cp[1]
 
     # skip cluster in case nan
@@ -244,8 +253,8 @@ def center_contours(img):
     i += 1
 
   # show image
-  cv2.imshow("Image", img)
-  cv2.waitKey(0)
+  #cv2.imshow("Image", img)
+  #cv2.waitKey(0)
 
   return segment_imgs, segment_pts
 # END center_contours

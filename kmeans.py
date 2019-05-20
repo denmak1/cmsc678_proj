@@ -26,7 +26,7 @@ class KMeans:
   # END add_data_pts
 
   def add_cluster_pt(self, pt, color):
-    print("adding cluster pt", pt, color)
+    #print("adding cluster pt", pt, color)
 
     self.cluster_pts.append([np.array(pt, dtype=np.float64), color])
     self.prev_cluster_pts.append([np.array([-9999, -9999], dtype=np.float64),
@@ -146,7 +146,7 @@ class KMeans:
     #for i in range(self.max_epochs):
     while (not self.is_conv()):
       self.assign_clusters()
-      self.print_cluster_pts()
+      #self.print_cluster_pts()
 
       if (self.live_graph):
         self.show_plot_live()
