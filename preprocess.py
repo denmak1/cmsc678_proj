@@ -7,6 +7,7 @@ import imutils
 
 from matplotlib import pyplot as plt
 from kmeans import KMeans
+from collections import Counter
 
 RAW_IMG_SIZE_X = 1920
 RAW_IMG_SIZE_Y = 1080
@@ -72,7 +73,7 @@ def center_contours(img):
   # fixed threshold used for contour mapping
   thresh   = cv2.threshold(blurred, 190, 255, cv2.THRESH_BINARY)[1]
 
-  # adaptive threshold used for finding max clusters
+  # adaptive threshold used for finding number of cluster points
   thresh_a = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, \
                                  cv2.THRESH_BINARY, 1001, 35)
 
@@ -92,6 +93,16 @@ def center_contours(img):
 
   cnts = imutils.grab_contours(cnts)
 
+  # TODO: rework this too
+  # need at least 2 contours so if fixed-threshold contours are not found,
+  # use adaptive as fallback
+  if (len(cnts) < 2):
+    cnts = cv2.findContours(thresh_a.copy(),
+                            cv2.RETR_EXTERNAL,
+                            cv2.CHAIN_APPROX_SIMPLE)
+
+    cnts = imutils.grab_contours(cnts)
+
   # TODO: need better way to automatically pick cluster amount
   # set number of clusters based on amount of contours
   num_clusters = int(MAX_NUM_CLUSTERS * nonzero_ratio)
@@ -101,10 +112,13 @@ def center_contours(img):
 
   # store list of contour center pts
   contour_pts = []
+  contour_map = {}
 
   for c in cnts:
+    area = cv2.contourArea(c)
+
     # dropout contours that are too small/noise
-    if (cv2.contourArea(c) < 22):
+    if (area < 15):
       continue
 
     # compute the center of the contour
@@ -117,7 +131,8 @@ def center_contours(img):
       cX = 0
       cY = 0
 
-    contour_pts.append((cX, cY));
+    contour_pts.append((cX, cY))
+    contour_map[(cX, cY)] = area
 
     # draw the contour and center of the shape on the image
     cv2.drawContours(img, [c], -1, (0, 255, 0), 2)
@@ -133,10 +148,30 @@ def center_contours(img):
   km = KMeans(MAX_EPOCH, False)
   km.add_data_pts(contour_pts)
 
+  # get the num_clusters largest contour points and store the points
+  # as a list
+  largest_contour_pts = \
+    list(dict(Counter(contour_map).most_common(num_clusters)).keys())
+
+  print(len(contour_pts))
+
+  if (num_clusters > len(contour_pts)):
+    num_clusters = len(contour_pts)
+
   # create n clusters (based on non-zero pixel ratio)
   for n in range(num_clusters):
-    km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
-                       random.randint(0, RAW_IMG_SIZE_Y)], "CENTER"+str(n))
+    # using random points
+    #km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
+    #                   random.randint(0, RAW_IMG_SIZE_Y)], "CENTER"+str(n))
+
+    # initialize initial cluster points to be the locations of the LARGEST
+    # contours.
+    try:             # TODO: revise this whole concept
+      km.add_cluster_pt([largest_contour_pts[n][0],
+                         largest_contour_pts[n][1]], "CENTER"+str(n))
+    except:          # random point if out of range (?)
+      km.add_cluster_pt([random.randint(0, RAW_IMG_SIZE_X),
+                         random.randint(0, RAW_IMG_SIZE_Y)], "CENTER"+str(n))
 
   km.run_alg()
   #km.print_cluster_pts()
@@ -197,8 +232,11 @@ def center_contours(img):
 
     # crop original image and store in array
     crop_img = img_orig[pt1[1]:pt2[1], pt1[0]:pt2[0]]
-    segment_imgs.append(crop_img)
-    segment_pts.append((pt1, pt2))
+
+    # exclude empty segments
+    if (crop_img.shape[1] * crop_img.shape[2] != 0):
+      segment_imgs.append(crop_img)
+      segment_pts.append((pt1, pt2))
 
     #cv2.imshow("cropped", crop_img)
     #cv2.waitKey(0)

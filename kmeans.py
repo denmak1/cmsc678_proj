@@ -3,7 +3,7 @@ import numpy as np
 import sys
 import os
 
-STOP_THRESH = 4
+STOP_THRESH = 2
 
 class KMeans:
   def __init__(self, max_epochs, live_graph):
@@ -143,8 +143,8 @@ class KMeans:
     if (self.live_graph):
       plt.ion()
 
-    for i in range(self.max_epochs):
-    #while (not self.is_conv()):
+    #for i in range(self.max_epochs):
+    while (not self.is_conv()):
       self.assign_clusters()
       self.print_cluster_pts()
 
