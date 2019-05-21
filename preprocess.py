@@ -151,7 +151,7 @@ def center_contours(img):
     contour_map[(cX, cY)] = area
 
     # draw the contour and center of the shape on the image
-    cv2.drawContours(img, [c], -1, (0, 255, 0), 2)
+    cv2.drawContours(img, [c], -1, (255, 0, 0), 2)
     cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
     cv2.putText(img, "center", (cX - 20, cY - 20),
       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)

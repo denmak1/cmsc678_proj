@@ -270,7 +270,7 @@ filter_size_conv1 = 3
 num_filters_conv1 = 64
 
 filter_size_conv2 = 1
-num_filters_conv2 = 256
+num_filters_conv2 = 128
 
 filter_size_conv3 = 5
 num_filters_conv3 = 32
