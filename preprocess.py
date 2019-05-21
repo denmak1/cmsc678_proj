@@ -37,8 +37,8 @@ def get_num_clusters_from_trace(img):
   erosion = cv2.erode(edges_inv, kernel, iterations=2)
   erosion = cv2.bitwise_not(erosion)
 
-  cv2.imshow("eroded", erosion)
-  cv2.waitKey(0)
+  #cv2.imshow("eroded", erosion)
+  #cv2.waitKey(0)
 
   # get non-zero ratio
   num_nonzeros = np.count_nonzero(erosion)
@@ -53,13 +53,13 @@ def get_num_clusters_from_trace(img):
   cnts = imutils.grab_contours(cnts)
   print("contours from trace", len(cnts), nonzero_ratio)
 
-  return (len(cnts) * (np.log(nonzero_ratio) + 1.0))
+  return len(cnts)
 # END get_num_clusters_from_trace
 
 # returns segmented images based on contours, outlines and points of interest
 # based on k-means clustered contour center points
 def center_contours(img):
-  #print("stuff=", get_num_clusters_from_trace(img))
+  #trace_cnt = get_num_clusters_from_trace(img)
 
   img_orig = img.copy()
   RAW_IMG_SIZE_X = len(img[0])
@@ -68,7 +68,7 @@ def center_contours(img):
   #img = adjust_gamma(img, 2.5)
   gray    = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
   #gray    = erode_img(img)
-  blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+  blurred = cv2.GaussianBlur(gray, (3, 3), 0)
 
   # fixed threshold used for contour mapping
   thresh   = cv2.threshold(blurred, 195, 255, cv2.THRESH_BINARY)[1]
@@ -96,13 +96,16 @@ def center_contours(img):
 
   # adaptive as fallback
   if (tv < 0):
+    #thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, \
+    #                               cv2.THRESH_BINARY, 1001, 35)
+
     cnts = cv2.findContours(thresh_a.copy(),
                             cv2.RETR_EXTERNAL,
                             cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
 
   # get non-zero ratio
-  num_nonzeros = np.count_nonzero(thresh_a)
+  num_nonzeros  = np.count_nonzero(thresh_a)
   nonzero_ratio = num_nonzeros / (RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y)
   zero_ratio    = ((RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y) - num_nonzeros) / \
                   (RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y)
@@ -115,8 +118,13 @@ def center_contours(img):
   # set number of clusters based on amount of contours
   num_clusters = int(MAX_NUM_CLUSTERS * nonzero_ratio)
   #num_clusters = int((np.log(nonzero_ratio) + 1) * MAX_NUM_CLUSTERS)
+  if (num_clusters > len(cnts)):
+    num_clusters = int(len(cnts)/2)
+
   if (num_clusters < 1):
     num_clusters = 1
+
+  #print("num_clusters = ", num_clusters)
 
   # store list of contour center pts
   contour_pts = []
@@ -126,7 +134,7 @@ def center_contours(img):
     area = cv2.contourArea(c)
 
     # dropout contours that are too small/noise
-    if (area < 15):
+    if (area < 5):
       continue
 
     # compute the center of the contour
@@ -147,6 +155,12 @@ def center_contours(img):
     cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
     cv2.putText(img, "center", (cX - 20, cY - 20),
       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+  # DEFAULT: if no area, add a center point to be the middle of the image
+  if (len(contour_pts) == 0):
+    pt = (RAW_IMG_SIZE_X/2, RAW_IMG_SIZE_Y/2)
+    contour_pts.append(pt)
+    contour_map[pt] = [RAW_IMG_SIZE_X * RAW_IMG_SIZE_Y]
 
   # show image
   #cv2.imshow("contours", img)
@@ -187,6 +201,8 @@ def center_contours(img):
   i = 0
   segment_imgs = []
   segment_pts  = []
+
+  #print(len(km.cluster_pts))
 
   for cp in km.cluster_pts:
     farthest_pt = km.get_farthest_x_and_y(i)

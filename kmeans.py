@@ -13,6 +13,7 @@ class KMeans:
     self.data = []
     self.cluster_pts = []
     self.prev_cluster_pts = []
+    self.empty_clusters = []
 
     self.live_graph = live_graph
   # END __init__
@@ -124,8 +125,10 @@ class KMeans:
     res = [False] * self.K
 
     for k in range(self.K):
-      if (self.dist(self.cluster_pts[k][0], \
-                    self.prev_cluster_pts[k][0]) <= STOP_THRESH):
+      if (k in self.empty_clusters):
+        res[k] = True
+      elif (self.dist(self.cluster_pts[k][0], \
+                      self.prev_cluster_pts[k][0]) <= STOP_THRESH):
         res[k] = True
 
     #print("is_conv", res)
@@ -152,8 +155,15 @@ class KMeans:
         self.show_plot_live()
 
       for k in range(self.K):
+        # ignore empty clusters
+        pts_in_cluster = self.get_pts_in_cluster(k)
+
+        if (len(pts_in_cluster) == 0):
+          self.empty_clusters.append(k)
+          continue
+
         self.prev_cluster_pts[k][0] = self.cluster_pts[k][0]
-        self.cluster_pts[k][0] = np.mean(self.get_pts_in_cluster(k), axis=0)
+        self.cluster_pts[k][0] = np.mean(pts_in_cluster, axis=0)
   # END run_alg
 # END Kmeans
 

@@ -113,7 +113,7 @@ def main():
       # move to next line and print text
       y = y0 + i * dy
       cv2.putText(img_orig, msg.format(result[i]), (seg_pts[c][0][0], y),
-        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
     c += 1
 

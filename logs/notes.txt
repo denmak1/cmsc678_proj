@@ -11,3 +11,6 @@ train_log-m2-sigmoid.txt - classifier_cnn_2.py with sigmoid instead of
 
 spc-m3-sig-400-log.txt - classifier_cnn_3r.py with sigmoid, 400 x 400,
                          with new scenery/backgrounds class
+
+Label time:
+m2_420: total time: 13183.760068178177 avg time: 0.17868773895959905

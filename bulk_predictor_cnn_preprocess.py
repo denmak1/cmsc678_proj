@@ -3,6 +3,7 @@ import numpy as np
 import os
 import sys
 import tensorflow as tf
+import time
 
 from preprocess import erode_img, kmeans_img, center_contours
 
@@ -69,7 +70,10 @@ def main():
     if (not os.path.exists(save_img_path)):
       os.makedirs(save_img_path, 0o0755)
 
+  start_time = time.time()
+  num_pics = 0
   for fp in os.listdir(img_dir):
+    num_pics += 1
     images = []
 
     print("loading image %s" % (img_dir + PATH_SEP + fp))
@@ -145,6 +149,10 @@ def main():
       save_img_path = img_dir + "_" + model_name + PATH_SEP + fp
       #print(save_img_path)
       cv2.imwrite(save_img_path, img_orig, [cv2.IMWRITE_JPEG_QUALITY, 100])
+
+  end_time = time.time()
+  print("total time:", end_time - start_time,
+        "avg time:", (end_time - start_time)/num_pics)
 
   if (dump_csv == 'y'):
     csv_file.close()
