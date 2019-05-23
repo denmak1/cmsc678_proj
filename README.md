@@ -56,6 +56,7 @@ For usage examples, just invoke the scripts without any arguments.
 General usage steps:
 * Get training data using dl_pics.py
 * Extract test data from video files using extract_screens.sh
+* Adjust use_classes.txt file to set classes to use for training
 * Train model using the classifier_cnn\*.py files
 * Run bulk classifier on extracted tes data screenshots
 * Import CSV into DB
