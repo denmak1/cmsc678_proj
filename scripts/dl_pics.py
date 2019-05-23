@@ -10,7 +10,7 @@ def main():
   if (len(sys.argv) < 3):
     msg = ("usage: python %s <tag> <tag2> [excluded ratings]\n"
            "excluded ratings can be (separated by space):\n"
-           "  s = safe, q = questionable, e = ecchi")
+           "  s = safe, q = questionable, e = nsfw")
     print(msg % (sys.argv)[0])
     return
 

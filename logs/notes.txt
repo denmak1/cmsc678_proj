@@ -14,4 +14,5 @@ spc-m3-sig-400-log.txt - classifier_cnn_3r.py with sigmoid, 400 x 400,
 
 Label time:
 m2_420: total time: 13183.760068178177 avg time: 0.17868773895959905
-m4_400-3: total time: 13354.74830532074 avg time: 0.18100524939104565
+m4_400_2: total time: 13123.788637638092 avg time: 0.17787490868432376
+m4_400_3: total time: 13354.74830532074 avg time: 0.18100524939104565

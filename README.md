@@ -17,6 +17,7 @@ You'll need python 3, with TensorFlow GPU acceleration and other stuff.
 Classifiers:
 * classifier_cnn_2r.py - CNN configuration 2, see layer properties in the file
 * classifier_cnn_3r.py - CNN configuration 3, see layer properties in the file
+* classifier_cnn_4r.py - CNN configuration 4, see layer properties in the file
 
 Predictors:
 * bulk_predictor_cnn.py - bulk predicts using the CNN on files in a directory
@@ -52,12 +53,9 @@ Deprecated files (these can be deleted but whatever):
 # Usage
 For usage examples, just invoke the scripts without any arguments.
 
-
-# TODO
-Try RNN with our image data.
-
-Try combination of RNN with CNN:
-  RNN layers into convolutional layer at the end.
-  CNN layers into RNN cell at the end?
-
-Rename repo
+General usage steps:
+* Get training data using dl_pics.py
+* Extract test data from video files using extract_screens.sh
+* Train model using the classifier_cnn\*.py files
+* Run bulk classifier on extracted tes data screenshots
+* Import CSV into DB
