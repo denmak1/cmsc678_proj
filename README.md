@@ -6,6 +6,20 @@ Weakly supervised approach so no manually inspecting or marking up of
 images to assist in training.
 
 
+# How it works
+Model is trained on fanart bulk downloaded using a script from an image
+hosting website. We use multi-layer CNNs (see the layer properties section
+in each of the classifier files) to train the basic model.
+
+Test data is extracted from a directory of video files, 1 frame per second.
+When evaulating on each test image, we threshold the image, find all contours,
+find center of each contour, determine number of clusters for object detection,
+perform k-means clustering on contour centers, generate bounding boxes on
+each k-means cluster point after convergence, crop each bounding box and
+evaluate each segment individually. The image is then annotated with
+predictions for each region.
+
+
 # Notes
 I'm using cygwin and windows cmd so the paths coded in the files
 will need to be adjusted to work.
